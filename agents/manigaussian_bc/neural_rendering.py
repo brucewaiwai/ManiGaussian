@@ -53,9 +53,13 @@ class NeuralRenderer(nn.Module):
         self.model_name = cfg.foundation_model_name
         self.d_embed = cfg.d_embed
         self.loss_embed_fn = cfg.loss_embed_fn
-
+        print(f'model name: {self.model_name}')
         if self.model_name == "diffusion":
-            from odise.modeling.meta_arch.ldm import LdmFeatureExtractor
+            try:
+                from odise.modeling.meta_arch.ldm import LdmFeatureExtractor
+            except:
+                from odise.modeling.meta_arch.ldm import LdmFeatureExtractor
+                
             import torchvision.transforms as T
             self.feature_extractor = LdmFeatureExtractor(
                             encoder_block_indices=(5, 7),
@@ -257,6 +261,9 @@ class NeuralRenderer(nn.Module):
         :loss_dict: dict, loss values
         :ret_dict: dict, rendered images
         '''
+
+
+        
         bs = rgb.shape[0]
 
         data = self.encode_data(
@@ -265,6 +272,7 @@ class NeuralRenderer(nn.Module):
             action=action, step=step,
         )
 
+        # print(data)
         render_novel = None
         next_render_novel = None
         render_embed = None

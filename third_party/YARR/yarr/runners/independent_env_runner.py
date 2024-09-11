@@ -83,6 +83,7 @@ class IndependentEnvRunner(EnvRunner):
               novel_command=None,
               use_eval_demo=True):
         multi_task = isinstance(env_config[0], list)
+        print(f'multi_task: {multi_task}')
         if multi_task:
             eval_env = CustomMultiTaskRLBenchEnv(
                 task_classes=env_config[0],

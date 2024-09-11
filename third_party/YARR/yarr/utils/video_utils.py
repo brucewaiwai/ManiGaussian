@@ -6,10 +6,12 @@ from rlbench import Environment
 from rlbench.backend.observation import Observation
 from rlbench.backend import utils
 from rlbench.backend.const import *
+from PIL import Image
 
 class CameraMotion(object):
-    def __init__(self, cam: VisionSensor):
+    def __init__(self, cam: VisionSensor, cam_mask:VisionSensor):
         self.cam = cam
+        self.cam_mask = cam_mask
 
     def step(self):
         raise NotImplementedError()
@@ -19,19 +21,29 @@ class CameraMotion(object):
 
     def restore_pose(self):
         self.cam.set_pose(self._prev_pose)
+        self.cam_mask.set_pose(self._prev_pose)
 
 
 class CircleCameraMotion(CameraMotion):
 
-    def __init__(self, cam: VisionSensor, origin: Dummy,
+    def __init__(self, cam: VisionSensor, cam_mask:VisionSensor, origin: Dummy,
                  speed: float, init_rotation: float = np.deg2rad(180)):
-        super().__init__(cam)
+        super().__init__(cam, cam_mask)
         self.origin = origin
         self.speed = speed  # in radians
         self.origin.rotate([0, 0, init_rotation])
 
     def step(self):
+        # self.origin.rotate([0, 0, self.speed])
+
         self.origin.rotate([0, 0, self.speed])
+        
+    def step_xyz(self,x,y,z):
+        pose = self.cam.get_position()
+        self.cam.set_position(pose + np.array([x, y, z]))
+        self.cam_mask.set_position(pose + np.array([x, y, z]))
+        
+
 
 
 class StaticCameraMotion(CameraMotion):
@@ -107,6 +119,7 @@ class TaskRecorder(object):
 
 
 
+
 class NeRFTaskRecorder(object):
     """
     for nerf data generation
@@ -120,6 +133,7 @@ class NeRFTaskRecorder(object):
 
         self._snaps_episode = []
         self._depths_episode = []
+        self._mask_episode = [] # add mask data
         self._poses_episode = []
         self._intrinsics_episode = []
         self._near_far_episode = []
@@ -132,12 +146,29 @@ class NeRFTaskRecorder(object):
         from tqdm import tqdm
         self.pbar = tqdm(total=200)
 
+    def reset(self):
+        self._snaps_episode = []
+        self._depths_episode = []
+        self._mask_episode = [] # add mask data
+        self._poses_episode = []
+        self._intrinsics_episode = []
+        self._near_far_episode = []
+        self.t = 0
+
 
     def record_task_description(self, task_description):
         self._task_description = task_description
     
 
+
     def take_snap(self, scene=None, obs: Observation=None):
+        def get_mask(sensor: VisionSensor, mask_fn):
+            mask = None
+            if sensor is not None:
+                # sensor.handle_explicitly()
+                mask = mask_fn(sensor.capture_rgb())
+            return mask
+        
         # save start pose
         self._cam_motion.save_pose()
         
@@ -155,6 +186,9 @@ class NeRFTaskRecorder(object):
         all_poses = []
         all_intrinsics = []
         all_near_far = []
+        all_mask = []
+        
+        mask_fn = lambda x: x
         # t=0, which we don't need
         # all_views.append((self._cam_motion.cam.capture_rgb() * 255.).astype(np.uint8))
         # all_poses.append(self._cam_motion.cam.get_matrix())
@@ -162,25 +196,87 @@ class NeRFTaskRecorder(object):
 
         for i in range(self._num_views):
             self._cam_motion.step()
-
+            
             # sparse sampling along views
-            if i < 20 or i > 40:
-                continue
-            # if i%2 == 0: # squeeze to 10 views
+            # if i < 20 or i > 40:
             #     continue
+            if i%5 == 0: # squeeze to 10 views
+                continue
             
 
             scene.step() # step the simulation environment
-            all_views.append(
-                (self._cam_motion.cam.capture_rgb() * 255.).astype(np.uint8))
+            all_views.append((self._cam_motion.cam.capture_rgb() * 255.).astype(np.uint8))
+            
+            
+            mask = get_mask(self._cam_motion.cam_mask, mask_fn)
+            all_mask.append(mask)
+            
+            # print(f'mask: {mask}')
+            
             all_poses.append(self._cam_motion.cam.get_matrix())
             all_depths.append(self._cam_motion.cam.capture_depth(in_meters=False))
             all_intrinsics.append(self._cam_motion.cam.get_intrinsic_matrix())
             all_near_far.append((self._cam_motion.cam.get_near_clipping_plane(),
                                  self._cam_motion.cam.get_far_clipping_plane()))
-        
+            
+        self._cam_motion.step_xyz(-0.5,0,0.1) # step the simulation environment in x, y, z direction
+        for i in range(self._num_views):
+            self._cam_motion.step()
+            
+            # sparse sampling along views
+            # if i < 20 or i > 40:
+            #     continue
+            if i%5 == 0: # squeeze to 10 views
+                continue
+            
+
+            scene.step() # step the simulation environment
+            all_views.append((self._cam_motion.cam.capture_rgb() * 255.).astype(np.uint8))
+            
+            
+            mask = get_mask(self._cam_motion.cam_mask, mask_fn)
+            all_mask.append(mask)
+            
+            # print(f'mask: {mask}')
+            
+            all_poses.append(self._cam_motion.cam.get_matrix())
+            all_depths.append(self._cam_motion.cam.capture_depth(in_meters=False))
+            all_intrinsics.append(self._cam_motion.cam.get_intrinsic_matrix())
+            all_near_far.append((self._cam_motion.cam.get_near_clipping_plane(),
+                                 self._cam_motion.cam.get_far_clipping_plane()))
+            
+
+            
+        self._cam_motion.step_xyz(-0.2,0,-0.4)
+        for i in range(self._num_views):
+            self._cam_motion.step()
+            
+            # sparse sampling along views
+            # if i < 20 or i > 40:
+            #     continue
+            if i%5 == 0: # squeeze to 10 views
+                continue
+            
+
+            scene.step() # step the simulation environment
+            all_views.append((self._cam_motion.cam.capture_rgb() * 255.).astype(np.uint8))
+            
+            
+            mask = get_mask(self._cam_motion.cam_mask, mask_fn)
+            all_mask.append(mask)
+            
+            # print(f'mask: {mask}')
+            
+            all_poses.append(self._cam_motion.cam.get_matrix())
+            all_depths.append(self._cam_motion.cam.capture_depth(in_meters=False))
+            all_intrinsics.append(self._cam_motion.cam.get_intrinsic_matrix())
+            all_near_far.append((self._cam_motion.cam.get_near_clipping_plane(),
+                                 self._cam_motion.cam.get_far_clipping_plane()))
+            
+            
         self._snaps_episode.append(all_views)
         self._depths_episode.append(all_depths)
+        self._mask_episode.append(all_mask)
         self._poses_episode.append(all_poses)
         self._intrinsics_episode.append(all_intrinsics)
         self._near_far_episode.append(all_near_far)
@@ -234,10 +330,12 @@ class NeRFTaskRecorder(object):
             # save all views and poses of this time step in a folder
             timestep_dir = os.path.join(path_dir, str(t))
             timestep_img_dir = os.path.join(timestep_dir, 'images')
+            timestep_mask_dir = os.path.join(timestep_dir, 'masks')
             timestep_depth_dir = os.path.join(timestep_dir, 'depths')
             timestep_pose_dir = os.path.join(timestep_dir, 'poses')
 
             os.makedirs(timestep_img_dir, exist_ok=True)
+            os.makedirs(timestep_mask_dir, exist_ok=True)
             os.makedirs(timestep_depth_dir, exist_ok=True)
             os.makedirs(timestep_pose_dir, exist_ok=True)
 
@@ -254,6 +352,13 @@ class NeRFTaskRecorder(object):
                 depth = self._depths_episode[t][i]
                 depth = utils.float_array_to_rgb_image(depth, scale_factor=DEPTH_SCALE)
                 depth.save(depth_path)
+                
+                # save the mask
+                mask_path = os.path.join(timestep_mask_dir, str(i) + '.png')
+                mask = self._mask_episode[t][i]
+                mask = Image.fromarray((mask * 255).astype(np.uint8))
+                mask.save(mask_path)
+                
                 
                 # save the pose and intrinsic
                 pose_path = os.path.join(timestep_pose_dir, str(i) + '.txt')
@@ -272,7 +377,5 @@ class NeRFTaskRecorder(object):
                 for desc in self._task_description:
                     f.write(desc + '\n')
         print('Successfully saved {} time steps'.format(self.t))
-        self.t = 0 # reset time
-        self._current_snaps = [] # clear current snaps
-        self._poses_episode = []
-        self._intrinsics_episode = []
+        
+        self.reset()

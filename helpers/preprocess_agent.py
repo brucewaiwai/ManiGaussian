@@ -17,10 +17,11 @@ class PreprocessAgent(Agent):
         self._norm_rgb = norm_rgb
 
     def build(self, training: bool, device: torch.device = None, use_ddp: bool = True, **kwargs):
-        try:
-            self._pose_agent.build(training, device, use_ddp, **kwargs)
-        except:
-            self._pose_agent.build(training, device, **kwargs)
+        # try:
+        self._pose_agent.build(training, device, use_ddp, **kwargs)
+        # except Exception as e:
+        #     cprint(e, "red")
+        #     self._pose_agent.build(training, device, **kwargs)
 
     def _norm_rgb_(self, x):
         return (x.float() / 255.0) * 2.0 - 1.0

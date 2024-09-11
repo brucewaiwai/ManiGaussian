@@ -3,12 +3,13 @@
 # this file does not support other examples.
 
 # set the method name
-method=${1}
+# method=${1}
+method=ManiGaussian_BC
 
 # set the seed number
 seed="0"
 # set the gpu id for training. we use two gpus for training. you could also use one gpu.
-train_gpu=${2:-"0,1"}
+train_gpu=${2:-"0"}
 train_gpu_list=(${train_gpu//,/ })
 
 # set the port for ddp training.
@@ -25,11 +26,12 @@ addition_info="$(date +%Y%m%d)"
 exp_name=${4:-"${method}_${addition_info}"}
 replay_dir="${cur_dir}/replay/${exp_name}"
 
+
 # create a tmux window for training
 echo "I am going to kill the session ${exp_name}, are you sure? (5s)"
-sleep 5s
+sleep 1s
 tmux kill-session -t ${exp_name}
-sleep 3s
+sleep 1s
 echo "start new tmux session: ${exp_name}, running main.py"
 tmux new-session -d -s ${exp_name}
 
@@ -38,14 +40,36 @@ tmux new-session -d -s ${exp_name}
 #######
 batch_size=1
 tasks=[close_jar,open_drawer,sweep_to_dustpan_of_size,meat_off_grill,turn_tap,slide_block_to_color_target,put_item_in_drawer,reach_and_drag,push_buttons,stack_blocks]
+# tasks=[open_drawer]
 demo=20
 lambda_embed=0.01
 lambda_dyna=0.1
 lambda_reg=0.0
 render_freq=2000
 
-tmux select-pane -t 0 
-tmux send-keys "conda activate manigaussian; CUDA_VISIBLE_DEVICES=${train_gpu} python train.py method=$method \
+# tmux select-pane -t 0 
+# tmux send-keys "conda activate manigaussian; CUDA_VISIBLE_DEVICES=${train_gpu} python train.py method=$method \
+# rlbench.task_name=${exp_name} \
+# rlbench.demo_path=${train_demo_path} \
+# replay.path=${replay_dir} \
+# framework.start_seed=${seed} \
+# framework.use_wandb=${use_wandb} \
+# method.use_wandb=${use_wandb} \
+# framework.wandb_group=${exp_name} \
+# framework.wandb_name=${exp_name} \
+# ddp.num_devices=${#train_gpu_list[@]} \
+# replay.batch_size=${batch_size} \
+# ddp.master_port=${port} \
+# rlbench.tasks=${tasks} \
+# rlbench.demos=${demo} \
+# method.neural_renderer.render_freq=${render_freq} \
+# method.neural_renderer.lambda_embed=${lambda_embed} \
+# method.neural_renderer.lambda_dyna=${lambda_dyna} \
+# method.neural_renderer.lambda_reg=${lambda_reg} \
+# method.neural_renderer.foundation_model_name=diffusion \
+# method.neural_renderer.use_dynamic_field=True" C-m
+
+CUDA_VISIBLE_DEVICES=${train_gpu} python train.py method=$method \
 rlbench.task_name=${exp_name} \
 rlbench.demo_path=${train_demo_path} \
 replay.path=${replay_dir} \
@@ -64,9 +88,10 @@ method.neural_renderer.lambda_embed=${lambda_embed} \
 method.neural_renderer.lambda_dyna=${lambda_dyna} \
 method.neural_renderer.lambda_reg=${lambda_reg} \
 method.neural_renderer.foundation_model_name=diffusion \
-method.neural_renderer.use_dynamic_field=True" C-m
+method.neural_renderer.use_dynamic_field=True \
+method.use_neural_rendering=False
 
 # remove 0.ckpt
 rm -rf logs/${exp_name}/seed${seed}/weights/0
 
-tmux -2 attach-session -t ${exp_name}
+# tmux -2 attach-session -t ${exp_name}

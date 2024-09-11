@@ -79,6 +79,7 @@ def get_stored_demos(amount: int, image_paths: bool, dataset_root: str,
     demos = []
     for example in selected_examples:
         example_path = join(examples_path, example)
+        # print(f'example_path:{example_path}')
         with open(join(example_path, LOW_DIM_PICKLE), 'rb') as f:
             obs = pickle.load(f)
 
@@ -114,6 +115,7 @@ def get_stored_demos(amount: int, image_paths: bool, dataset_root: str,
         
         # for nerf
         nerf_multi_view_f = join(example_path, NERF_MULTI_VIEW_FOLDER)
+        
 
         num_steps = len(obs)
 
@@ -135,8 +137,16 @@ def get_stored_demos(amount: int, image_paths: bool, dataset_root: str,
             print('front_rgb_f: %d' % len(listdir(front_rgb_f)))
             print('front_depth_f: %d' % len(listdir(front_depth_f)))
 
-
-            print('Broken dataset assumption. continuing anyway :/')
+            cprint('Broken dataset assumption. continuing anyway :/', 'red')
+            cprint(f'example_path: {example_path}','red')
+            return -1
+        
+        if exists(nerf_multi_view_f): # for no nert data in testing set
+            if not num_steps == len(listdir(nerf_multi_view_f))+1:
+                print('nerf_multi_view_f: %d' % len(listdir(nerf_multi_view_f)))
+                cprint('Broken dataset assumption. continuing anyway :/', 'red')
+                cprint(f'example_path: {example_path}','red')
+                return -1
 
 
         for i in range(num_steps):
@@ -205,29 +215,37 @@ def get_stored_demos(amount: int, image_paths: bool, dataset_root: str,
                     nerf_img_dir = join(obs[i].nerf_multi_view, 'images')
                     nerf_depth_dir = join(obs[i].nerf_multi_view, 'depths')
                     nerf_camera_dir = join(obs[i].nerf_multi_view, 'poses')
+                    nerf_mask_dir = join(obs[i].nerf_multi_view, 'masks')
                     if not exists(nerf_img_dir):
                         obs[i].nerf_multi_view_rgb = None
                         obs[i].nerf_multi_view_depth = None
                         obs[i].nerf_multi_view_camera = None
+                        obs[i].nerf_multi_view_mask = None
                         # print(colored(f'nerf multi-view images not found in {nerf_img_dir}', 'red'))
                     elif not exists(nerf_camera_dir):
                         obs[i].nerf_multi_view_rgb = None
                         obs[i].nerf_multi_view_depth = None
                         obs[i].nerf_multi_view_camera = None
+                        obs[i].nerf_multi_view_mask = None
                         # print(colored(f'nerf multi-view cameras not found {nerf_camera_dir}', 'red'))
                     else:
                         all_img_files = natsorted(listdir(nerf_img_dir))
                         all_depth_files = natsorted(listdir(nerf_depth_dir))
                         all_camera_files = natsorted(listdir(nerf_camera_dir))
+                        all_mask_files = natsorted(listdir(nerf_mask_dir))
 
                         all_img_files = [join(nerf_img_dir, f) for f in all_img_files]
                         all_depth_files = [join(nerf_depth_dir, f) for f in all_depth_files]
                         all_camera_files = [join(nerf_camera_dir, f) for f in all_camera_files]
+                        all_mask_files = [join(nerf_mask_dir, f) for f in all_mask_files]
+
 
                         # here we do not load the images, but load the paths. during training, we will load the images
                         obs[i].nerf_multi_view_rgb = np.array(all_img_files)
                         obs[i].nerf_multi_view_depth = np.array(all_depth_files)
                         obs[i].nerf_multi_view_camera = np.array(all_camera_files)
+                        obs[i].nerf_multi_view_mask = np.array(all_mask_files)
+                        
                         # print(colored(f"step {i}: {len(all_img_files)} nerf multi-view images found.", "cyan"))
                     
 

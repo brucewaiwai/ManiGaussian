@@ -477,8 +477,11 @@ class CLIP(nn.Module):
         return x
 
     def encode_text_with_embeddings(self, text):
+        # nn.Enmbedding
         x = self.token_embedding(text).type(self.dtype)  # [batch_size, n_ctx, d_model]
 
+
+        # nn.Parameter
         x = x + self.positional_embedding.type(self.dtype)
         x = x.permute(1, 0, 2)  # NLD -> LND
         x = self.transformer(x)

@@ -352,6 +352,10 @@ def extract_obs(obs: Observation,
     else:
         nerf_multi_view_camera = None
 
+    if obs.nerf_multi_view_mask is not None:
+        nerf_multi_view_mask = obs.nerf_multi_view_mask
+    else:
+        nerf_multi_view_mask = None
 
     obs_dict = vars(obs)
     obs_dict = {k: v for k, v in obs_dict.items() if v is not None}
@@ -393,6 +397,7 @@ def extract_obs(obs: Observation,
     obs_dict['nerf_multi_view_rgb'] = nerf_multi_view_rgb
     obs_dict['nerf_multi_view_depth'] = nerf_multi_view_depth
     obs_dict['nerf_multi_view_camera'] = nerf_multi_view_camera
+    obs_dict['nerf_multi_view_mask'] = nerf_multi_view_mask
 
     # for next frame prediction
     if next_obs is not None:
@@ -400,10 +405,12 @@ def extract_obs(obs: Observation,
             obs_dict['nerf_next_multi_view_rgb'] = next_obs.nerf_multi_view_rgb
             obs_dict['nerf_next_multi_view_depth'] = next_obs.nerf_multi_view_depth
             obs_dict['nerf_next_multi_view_camera'] = next_obs.nerf_multi_view_camera
+            obs_dict['nerf_next_multi_view_mask'] = next_obs.nerf_multi_view_mask
         else:
             obs_dict['nerf_next_multi_view_rgb'] = None
             obs_dict['nerf_next_multi_view_depth'] = None
             obs_dict['nerf_next_multi_view_camera'] = None
+            obs_dict['nerf_next_multi_view_mask']  = None
 
     # if next_obs is None, we do not add the next frame prediction
 
@@ -420,7 +427,7 @@ def create_obs_config(camera_names: List[str],
     used_cams = CameraConfig(
         rgb=True,
         point_cloud=True,
-        mask=False,
+        mask=True,
         depth=use_depth,
         image_size=camera_resolution,
         render_mode=RenderMode.OPENGL)
@@ -432,6 +439,7 @@ def create_obs_config(camera_names: List[str],
         cam_obs.append('%s_rgb' % n)
         cam_obs.append('%s_depth' % n)
         cam_obs.append('%s_pointcloud' % n)
+        cam_obs.append('%s_mask' % n)
 
     # Some of these obs are only used for keypoint detection.
     obs_config = ObservationConfig(

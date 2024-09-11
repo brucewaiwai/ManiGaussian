@@ -1,16 +1,17 @@
 # example to run our ManiGaussian:
 #       bash scripts/train_and_eval_w_geo.sh ManiGaussian_BC 0,1 12345 ${exp_name}
+#       bash scripts/train_and_eval_w_geo.sh ManiGaussian_BC 0 12345 ${exp_name}
 # Other examples:
 #       bash scripts/train_and_eval_w_geo.sh GNFACTOR_BC 0,1 12345 ${exp_name}
 #       bash scripts/train_and_eval_w_geo.sh PERACT_BC 0,1 12345 ${exp_name}
 
 # set the method name
-method=${1}
-
+# method=${1}
+method=ManiGaussian_BC
 # set the seed number
 seed="0"
 # set the gpu id for training. we use two gpus for training. you could also use one gpu.
-train_gpu=${2:-"0,1"}
+train_gpu=${2:-"0"}
 train_gpu_list=(${train_gpu//,/ })
 
 # set the port for ddp training.
@@ -29,9 +30,9 @@ replay_dir="${cur_dir}/replay/${exp_name}"
 
 # create a tmux window for training
 echo "I am going to kill the session ${exp_name}, are you sure? (5s)"
-sleep 5s
+sleep 1s
 tmux kill-session -t ${exp_name}
-sleep 3s
+sleep 1s
 echo "start new tmux session: ${exp_name}, running main.py"
 tmux new-session -d -s ${exp_name}
 
@@ -39,7 +40,8 @@ tmux new-session -d -s ${exp_name}
 # override hyper-params in config.yaml
 #######
 batch_size=1
-tasks=[close_jar,open_drawer,sweep_to_dustpan_of_size,meat_off_grill,turn_tap,slide_block_to_color_target,put_item_in_drawer,reach_and_drag,push_buttons,stack_blocks]
+# tasks=[close_jar,open_drawer,sweep_to_dustpan_of_size,meat_off_grill,turn_tap,slide_block_to_color_target,put_item_in_drawer,reach_and_drag,push_buttons,stack_blocks]
+tasks=[close_jar]
 demo=20
 render_freq=2000
 

@@ -6,8 +6,8 @@
 #       bash scripts/eval.sh PERACT_BC ${exp_name} 0
 
 # some params specified by user
-method_name=$1
-exp_name=$2
+method_name=ManiGaussian_BC
+exp_name=ManiGaussian_BC_20240811
 
 # set the seed number
 seed="0"
@@ -19,6 +19,7 @@ train_demo_path="${cur_dir}/data/train_data"
 test_demo_path="${cur_dir}/data/test_data"
 
 use_split='test'    # or 'train' for debugging
+headless=True
 
 starttime=`date +'%Y-%m-%d %H:%M:%S'`
 
@@ -35,10 +36,16 @@ if [ "${use_split}" == "train" ]; then
 else
     echo "eval on test set"
     # eval on test set
-    CUDA_VISIBLE_DEVICES=${eval_gpu} xvfb-run -a python eval.py \
+    # CUDA_VISIBLE_DEVICES=${eval_gpu} xvfb-run -a python eval.py \
+    #     method.name=$method \
+    #     rlbench.task_name=${exp_name} \
+    #     rlbench.demo_path=${test_demo_path} \
+    #     framework.start_seed=${seed}
+    CUDA_VISIBLE_DEVICES=${eval_gpu} python eval.py \
         method.name=$method \
         rlbench.task_name=${exp_name} \
         rlbench.demo_path=${test_demo_path} \
+        rlbench.headless=${headless}
         framework.start_seed=${seed}
 fi
 

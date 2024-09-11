@@ -146,7 +146,11 @@ class OfflineTrainRunner():
                 batch['nerf_next_multi_view_rgb'] = batch['nerf_next_multi_view_rgb'].squeeze(1)
                 batch['nerf_next_multi_view_depth'] = batch['nerf_next_multi_view_depth'].squeeze(1)
                 batch['nerf_next_multi_view_camera'] = batch['nerf_next_multi_view_camera'].squeeze(1)
-        
+
+        # print(batch['nerf_multi_view_rgb'])
+        # print(batch['nerf_multi_view_rgb'].shape)
+
+
         if batch['nerf_multi_view_rgb'] is None or batch['nerf_multi_view_rgb'][0,0] is None:
             if not SILENT:
                 cprint('batch[nerf_multi_view_rgb] is None. find next data iter', 'red')

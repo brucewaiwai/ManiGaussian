@@ -185,7 +185,7 @@ class VoxelGrid(nn.Module):
         # BS x NC x 3
         voxel_values = coords
         if coord_features is not None:
-            voxel_values = torch.cat([coord_features, voxel_values], -1)
+            voxel_values = torch.cat([coord_features, voxel_values], -1) # x,y,z,r,g,b = (1,16384,6)
 
         
         _, num_coords, _ = voxel_indices.shape
@@ -195,15 +195,17 @@ class VoxelGrid(nn.Module):
 
         # BS x N x 4
         voxel_values_pruned_flat = torch.cat(
-            [voxel_values, self._ones_max_coords[:, :num_coords]], -1)
+            [voxel_values, self._ones_max_coords[:, :num_coords]], -1) # x,y,z,r,g,b,1 = (1,16384,7)
 
 
         # BS x x_max x y_max x z_max x 4
         scattered = self._scatter_nd(
             all_indices.view([-1, 1 + 3]),
-            voxel_values_pruned_flat.view(-1, self._voxel_feature_size))
+            voxel_values_pruned_flat.view(-1, self._voxel_feature_size)) 
+        # _voxel_feature_size = 4+3 = 7
+        # voxel_values_pruned_flat.view(-1, self._voxel_feature_size) = (16384,7)
 
-        vox = scattered[:, 1:-1, 1:-1, 1:-1]
+        vox = scattered[:, 1:-1, 1:-1, 1:-1] # crop edge
         if INCLUDE_PER_VOXEL_COORD:
             res_expanded = res.unsqueeze(1).unsqueeze(1).unsqueeze(1)
             res_centre = (res_expanded * self._index_grid) + res_expanded / 2.0
@@ -219,6 +221,16 @@ class VoxelGrid(nn.Module):
         vox = torch.cat(
             [vox[..., :-1], self._index_grid[:, :-2, :-2, :-2] / self._voxel_d,
             vox[..., -1:]], -1)
+        # _index_grid = tensor([[[[[  0.,   0.,   0.],
+                                # [  0.,   0.,   1.],
+                                # [  0.,   0.,   2.],
+                                # ...,
+                                # [  0.,   0.,  99.],
+                                # [  0.,   0., 100.],
+                                # [  0.,   0., 101.]], torch.Size([1, 102, 102, 102, 3])
+        #  self._voxel_d = 100
+        # [vox[..., :-1] = xyz rgb 1
+        # [vox[..., :-1] = occupied
         
         if not only_features:
             if return_density:

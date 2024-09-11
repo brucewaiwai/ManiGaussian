@@ -191,10 +191,12 @@ class Scene(object):
         oc_ob = self._obs_config.overhead_camera
         wc_ob = self._obs_config.wrist_camera
         fc_ob = self._obs_config.front_camera
-
+        # print(f'fc_ob {fc_ob.masks_as_one_channel}')
         lsc_mask_fn, rsc_mask_fn, oc_mask_fn, wc_mask_fn, fc_mask_fn = [
             (rgb_handles_to_mask if c.masks_as_one_channel else lambda x: x
              ) for c in [lsc_ob, rsc_ob, oc_ob, wc_ob, fc_ob]]
+        
+        # print(f'fc_mask_fn: {fc_ob.masks_as_one_channel}, {fc_mask_fn}')
 
         def get_rgb_depth(sensor: VisionSensor, get_rgb: bool, get_depth: bool,
                           get_pcd: bool, rgb_noise: NoiseModel,
@@ -204,6 +206,7 @@ class Scene(object):
                 sensor.handle_explicitly()
                 if get_rgb:
                     rgb = sensor.capture_rgb()
+                    # print(f'rgb:{rgb}')
                     if rgb_noise is not None:
                         rgb = rgb_noise.apply(rgb)
                     rgb = np.clip((rgb * 255.).astype(np.uint8), 0, 255)
@@ -223,10 +226,12 @@ class Scene(object):
             return rgb, depth, pcd
 
         def get_mask(sensor: VisionSensor, mask_fn):
+            # print('get_mask')
             mask = None
             if sensor is not None:
                 sensor.handle_explicitly()
                 mask = mask_fn(sensor.capture_rgb())
+                # print(mask)
             return mask
 
         left_shoulder_rgb, left_shoulder_depth, left_shoulder_pcd = get_rgb_depth(
@@ -255,6 +260,7 @@ class Scene(object):
                               wc_mask_fn) if wc_ob.mask else None
         front_mask = get_mask(self._cam_front_mask,
                               fc_mask_fn) if fc_ob.mask else None
+        # print(f'front_mask: {front_mask}')
 
         obs = Observation(
             left_shoulder_rgb=left_shoulder_rgb,
@@ -479,6 +485,8 @@ class Scene(object):
                 else:
                     mask_cam.set_explicit_handling(1)
                     mask_cam.set_resolution(conf.image_size)
+                    # mask_cam.set_render_mode(conf.render_mode)
+                    # print(f'get_render_mode: {mask_cam.get_render_mode()}')
         _set_rgb_props(
             self._cam_over_shoulder_left,
             self._obs_config.left_shoulder_camera.rgb,

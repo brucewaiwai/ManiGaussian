@@ -368,15 +368,18 @@ def run_all_variations(i, lock, task_index, variation_count, results, file_lock,
     camera_resolution = [128, 128]
     rotate_speed = 0.1
     fps = 20
-    num_views = FLAGS.num_views
+    # num_views = FLAGS.num_views
+    num_views = 64 # circle
 
     cam_placeholder = Dummy('cam_cinematic_placeholder')
     cam = VisionSensor.create(resolution=camera_resolution, render_mode=RenderMode.OPENGL)
-
+    cam_mask = VisionSensor.create(resolution=camera_resolution, render_mode=RenderMode.OPENGL_COLOR_CODED) # add mask data
     
     cam_front = VisionSensor('cam_front')
+
     pose_front = cam_front.get_pose()
     cam.set_pose(pose_front)
+    cam_mask.set_pose(pose_front)
     
     # pose = cam_placeholder.get_pose()
     # pose[2] -= 0.2
@@ -384,8 +387,9 @@ def run_all_variations(i, lock, task_index, variation_count, results, file_lock,
     # cam.set_pose(pose)
 
     cam.set_parent(cam_placeholder)
+    cam_mask.set_parent(cam_placeholder)
 
-    cam_motion = CircleCameraMotion(cam, Dummy('cam_cinematic_base'), rotate_speed)
+    cam_motion = CircleCameraMotion(cam, cam_mask,  Dummy('cam_cinematic_base'), rotate_speed)
     # ========================================================================
 
     while True:
@@ -433,7 +437,8 @@ def run_all_variations(i, lock, task_index, variation_count, results, file_lock,
                     demo, = task_env.get_demos(
                         amount=1,
                         live_demos=True,
-                        callable_each_step=task_recorder.take_snap
+                        callable_each_step=task_recorder.take_snap,
+                        recoder = task_recorder
                         )
                 except Exception as e:
                     attempts -= 1

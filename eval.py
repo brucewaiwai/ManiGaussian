@@ -179,7 +179,7 @@ def eval_seed(train_cfg,
 
 @hydra.main(config_name='eval', config_path='conf')
 def main(eval_cfg: DictConfig) -> None:
-
+    print(f'headless: {eval_cfg.rlbench.headless}')
     start_seed = eval_cfg.framework.start_seed
     cwd = os.getcwd()
     logdir = os.path.join(cwd, 'seed%d' % start_seed)

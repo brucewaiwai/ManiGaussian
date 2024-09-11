@@ -63,7 +63,7 @@ method.neural_renderer.lambda_embed=0.0 \
 method.neural_renderer.lambda_dyna=${lambda_dyna} \
 method.neural_renderer.lambda_reg=${lambda_reg} \
 method.neural_renderer.foundation_model_name=null \
-method.neural_renderer.use_dynamic_field=True" C-m
+method.neural_renderer.=True" C-m
 
 # remove 0.ckpt
 rm -rf logs/${exp_name}/seed${seed}/weights/0

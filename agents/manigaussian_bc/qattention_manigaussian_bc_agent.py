@@ -491,7 +491,11 @@ class QAttentionPerActBCAgent(Agent):
                 raise Exception('Unknown optimizer type')
             
             # DDP optimizer
-            self._optimizer = fabric.setup_optimizers(self._optimizer)
+            try:
+                self._optimizer = fabric.setup_optimizers(self._optimizer)
+            except:
+                pass
+
 
             # learning rate scheduler
             if self._lr_scheduler:
@@ -532,9 +536,20 @@ class QAttentionPerActBCAgent(Agent):
                                                                         device=device)
 
             # print total params
-            logging.info('# Q Params: %d M' % (sum(
-                p.numel() for name, p in self._q.named_parameters() \
-                if p.requires_grad and 'clip' not in name)/1e6) )
+            total_num_params  = 0
+            total_size_params = 0
+            for name, p in self._q.named_parameters():
+                if p.requires_grad and 'clip' not in name:
+                    # print(name)
+                    total_num_params+= p.numel()
+                    total_size_params += p.numel()* p.element_size()
+                
+            logging.info('# Q Params: %d M' % (total_num_params/1e6))
+            logging.info('# total_size_params: %d M' % (total_size_params/1e6))
+            
+            # logging.info('# Q Params: %d M' % (sum(
+            #     p.numel() for name, p in self._q.named_parameters() \
+            #     if p.requires_grad and 'clip' not in name)/1e6) )
         else:
             for param in self._q.parameters():
                 param.requires_grad = False
@@ -651,7 +666,7 @@ class QAttentionPerActBCAgent(Agent):
             self.feature = output.detach()
             
         
-    def update(self, step: int, replay_sample: dict, fabric: Fabric) -> dict:
+    def update(self, step: int, replay_sample: dict, fabric: Fabric = None) -> dict:
         '''
         : replay_sample.action: [bs, 8]
         : replay_sample['trans_action_indicies']: [bs, 3]
@@ -684,6 +699,8 @@ class QAttentionPerActBCAgent(Agent):
         nerf_next_multi_view_rgb_path = replay_sample['nerf_next_multi_view_rgb']
         nerf_next_multi_view_depth_path = replay_sample['nerf_next_multi_view_depth']
         nerf_next_multi_view_camera_path = replay_sample['nerf_next_multi_view_camera']
+
+        # cprint(nerf_multi_view_rgb_path, 'red')
 
         if nerf_multi_view_rgb_path is None or nerf_multi_view_rgb_path[0,0] is None:
             cprint(nerf_multi_view_rgb_path, 'red')

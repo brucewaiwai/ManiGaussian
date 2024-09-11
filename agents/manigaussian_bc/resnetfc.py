@@ -143,10 +143,11 @@ class ResnetFC(nn.Module):
         """
         with profiler.record_function("resnetfc_infer"):
             assert zx.size(-1) == self.d_latent + self.d_in, f"{zx.size(-1)} != {self.d_latent} + {self.d_in}"
-
+            
+            # zx (B,128+39)
             if self.d_latent > 0:
-                z = zx[..., : self.d_latent]
-                x = zx[..., self.d_latent :]
+                z = zx[..., : self.d_latent] # (B,128)
+                x = zx[..., self.d_latent :] # (B,39)
             else:
                 x = zx
 

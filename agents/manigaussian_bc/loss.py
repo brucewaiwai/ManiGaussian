@@ -4,12 +4,14 @@ import torch.nn.functional as F
 from torch.autograd import Variable
 from math import exp
 import einops
-
+mse = torch.nn.MSELoss()
 
 def l1_loss(network_output, gt):
+    # return torch.nn.L1Loss(network_output,gt)
     return torch.abs((network_output - gt)).mean()
 
 def l2_loss(network_output, gt):
+    # return mse(network_output,gt)
     return ((network_output - gt) ** 2).mean()
 
 def l1_loss_mask(network_output, gt, mask):

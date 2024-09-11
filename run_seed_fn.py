@@ -70,11 +70,13 @@ def run_seed(
     elif cfg.method.name == 'ManiGaussian_BC':
         from agents import manigaussian_bc
         replay_buffer = manigaussian_bc.launch_utils.create_replay(
-            cfg.replay.batch_size, cfg.replay.timesteps,
+            cfg.replay.batch_size, 
+            cfg.replay.timesteps,
             cfg.replay.prioritisation,
             cfg.replay.task_uniform,
             replay_path if cfg.replay.use_disk else None,
-            cams, cfg.method.voxel_sizes,
+            cams, 
+            cfg.method.voxel_sizes,
             cfg.rlbench.camera_resolution,
             cfg=cfg)
 

@@ -32,7 +32,6 @@ generalization_train_data/
 generalization_test_data/
 test_data/
 train_data/
-test/
 eval.png
 bar.png
 curve.png
@@ -48,3 +47,5 @@ pascal_fold0.ckpt
 __pycache__/
 
 
+recon
+recon_gs

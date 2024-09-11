@@ -36,9 +36,12 @@ from lightning.fabric import Fabric
 REWARD_SCALE = 100.0
 LOW_DIM_SIZE = 4
 
-def create_replay(batch_size: int, timesteps: int,
-                  prioritisation: bool, task_uniform: bool,
-                  save_dir: str, cameras: list,
+def create_replay(batch_size: int, 
+                  timesteps: int,
+                  prioritisation: bool, 
+                  task_uniform: bool,
+                  save_dir: str, 
+                  cameras: list,
                   voxel_sizes,
                   image_size=[128, 128],
                   replay_size=3e5,
@@ -71,6 +74,8 @@ def create_replay(batch_size: int, timesteps: int,
             ObservationElement('%s_point_cloud' % cname, (3, *image_size),
                                np.float32))  # see pyrep/objects/vision_sensor.py on how pointclouds are extracted from depth frames
         observation_elements.append(
+            ObservationElement('%s_mask' % cname, (1, *image_size), np.float32))
+        observation_elements.append(
             ObservationElement('%s_camera_extrinsics' % cname, (4, 4,), np.float32))
         observation_elements.append(
             ObservationElement('%s_camera_intrinsics' % cname, (3, 3,), np.float32))
@@ -82,6 +87,8 @@ def create_replay(batch_size: int, timesteps: int,
         ObservationElement('nerf_multi_view_depth', (num_view_for_nerf,), np.object_))
     observation_elements.append(
         ObservationElement('nerf_multi_view_camera', (num_view_for_nerf,), np.object_))
+    observation_elements.append(
+        ObservationElement('nerf_multi_view_mask', (num_view_for_nerf,), np.object_))
     
     # for next nerf
     observation_elements.append(
@@ -90,7 +97,8 @@ def create_replay(batch_size: int, timesteps: int,
         ObservationElement('nerf_next_multi_view_depth', (num_view_for_nerf,), np.object_))
     observation_elements.append(
         ObservationElement('nerf_next_multi_view_camera', (num_view_for_nerf,), np.object_))
-
+    observation_elements.append(
+        ObservationElement('nerf_next_multi_view_mask', (num_view_for_nerf,), np.object_))
     # discretized translation, discretized rotation, discrete ignore collision, 6-DoF gripper pose, and pre-trained language embeddings
     observation_elements.extend([
         ReplayElement('trans_action_indicies', (trans_indicies_size,),

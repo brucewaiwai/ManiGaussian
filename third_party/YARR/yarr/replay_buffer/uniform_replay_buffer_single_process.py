@@ -416,6 +416,7 @@ class UniformReplayBufferSingleProcess(ReplayBuffer):
                 len(signature), len(kwargs)) + error_list)
 
         for store_element in signature:
+
             arg_element = kwargs[store_element.name]
             if isinstance(arg_element, np.ndarray):
                 arg_shape = arg_element.shape
@@ -430,8 +431,8 @@ class UniformReplayBufferSingleProcess(ReplayBuffer):
                 arg_shape = tuple(store_element.shape) # to avoid error we assume it is the right shape. debug this.
             store_element_shape = tuple(store_element.shape)
             if arg_shape != store_element_shape:
-                raise ValueError('arg has shape {}, expected {}'.format(
-                    arg_shape, store_element_shape))
+                raise ValueError('{} arg has shape {}, expected {}'.format(
+                    store_element.name, arg_shape, store_element_shape))
 
     def is_empty(self):
         """Is the Replay Buffer empty?"""
